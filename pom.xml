@@ -138,61 +138,6 @@
                 <version>3.0.1</version>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>npm install</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.npm}</skip>
-                            <executable>npm</executable>
-                            <workingDirectory>./angularclient</workingDirectory>
-                            <arguments>
-                                <argument>install</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm report</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.npm.warnings}</skip>
-                            <executable>npm</executable>
-                            <workingDirectory>./angularclient</workingDirectory>
-                            <arguments>
-                                <argument>run</argument>
-                                <argument>warnings</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>Build fronted</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.npm}</skip>
-                            <executable>./node_modules/.bin/ng</executable>
-                            <workingDirectory>./angularclient</workingDirectory>
-                            <arguments>
-                                <argument>build</argument>
-                                <argument>--configuration=${frontend.configuration}</argument>
-                                <argument>--base-href=${frontend.context}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>3.12.1</version>
@@ -213,32 +158,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>angularclient/node_modules</directory>
-                            <includes>
-                                <include>**</include>
-                            </includes>
-                        </fileset>
-                        <fileset>
-                            <directory>angularclient/.angular</directory>
-                            <includes>
-                                <include>**</include>
-                            </includes>
-                        </fileset>
-                        <fileset>
-                            <directory>src/main/resources/static</directory>
-                            <includes>
-                                <include>**</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>io.spring.javaformat</groupId>
