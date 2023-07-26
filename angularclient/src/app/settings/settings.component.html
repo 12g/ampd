@@ -15,39 +15,39 @@
     </div>
 
     <div class="settings-grid">
-      <mat-card *ngFor="let setting of feSettings">
+      <mat-card *ngFor="let setting of feSettings$ | async">
         <mat-card-header>
-          <mat-card-title>{{ setting.name | camelCaseTitle }}</mat-card-title>
+          <mat-card-title>{{ setting[0] | camelCaseTitle }}</mat-card-title>
         </mat-card-header>
-        <mat-card-content [ngSwitch]="setting.type">
+        <mat-card-content [ngSwitch]="setting[1].type">
           <!-- Boolean -->
           <mat-slide-toggle
-            [checked]="setting.value !== '' && setting.value"
+            [checked]="setting[1].value !== '' && setting[1].value"
             *ngSwitchCase="'bool'"
-            (change)="toggleFrontendSetting(setting.name, $event)"
+            (change)="toggleFrontendSetting(setting[0], $event)"
           >
-            <mat-label align="end">{{ setting.description }} </mat-label>
+            <mat-label align="end">{{ setting[1].description }} </mat-label>
           </mat-slide-toggle>
           <!-- Default -->
           <div *ngSwitchDefault>
             <mat-form-field
               appearance="fill"
               class="w-full"
-              [title]="setting.description"
+              [title]="setting[1].description"
             >
               <input
                 matInput
-                [value]="setting.value"
+                [value]="setting[1].value"
                 #inputField
-                (keyup.enter)="onSaveBtnClick(setting.name, inputField.value)"
+                (keyup.enter)="onSaveBtnClick(setting[0], inputField.value)"
               />
-              <mat-label> {{ setting.description }}</mat-label>
+              <mat-label> {{ setting[1].description }}</mat-label>
             </mat-form-field>
             <mat-card-actions>
               <button
                 mat-stroked-button
                 type="submit"
-                (click)="onSaveBtnClick(setting.name, inputField.value)"
+                (click)="onSaveBtnClick(setting[0], inputField.value)"
               >
                 Save
               </button>

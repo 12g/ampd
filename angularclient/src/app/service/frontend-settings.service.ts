@@ -1,10 +1,12 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, map } from "rxjs";
+import { BehaviorSubject, Observable, catchError, map, of } from "rxjs";
 import {
+  DEFAULT_SETTINGS,
   FrontendSettings,
   SettingKeys,
 } from "../shared/model/internal/frontend-settings";
 import { FrontendSetting } from "./../shared/model/internal/frontend-settings";
+import { isValueOfStringEnum } from "src/functions/isValueOfStringEnum";
 
 const LS_KEY = "ampd_userSettings";
 
@@ -14,26 +16,26 @@ const LS_KEY = "ampd_userSettings";
 export class FrontendSettingsService {
   pageSizeOptions = [20, 50, 100];
 
-  private settings: FrontendSetting[] = FrontendSettings;
-  private settings$: Observable<FrontendSetting[]>;
-  private settingsSub$: BehaviorSubject<FrontendSetting[]>;
+  private settings: FrontendSettings = DEFAULT_SETTINGS;
+  private settings$: Observable<FrontendSettings>;
+  private settingsSub$: BehaviorSubject<FrontendSettings>;
 
   constructor() {
-    this.settingsSub$ = new BehaviorSubject<FrontendSetting[]>(
+    this.settingsSub$ = new BehaviorSubject<FrontendSettings>(
       this.loadFrontendSettings()
     );
     this.settings$ = this.settingsSub$.asObservable();
   }
 
   save(name: string, value: string | number | boolean): void {
-    const index = this.settings.findIndex((s) => s.name === name);
-    if (index === -1) {
+    if (isValueOfStringEnum(SettingKeys, name)) {
+      this.settings[name as SettingKeys].value = String(value);
+      this.persist();
+      this.settingsSub$.next(this.settings);
+    } else {
       console.error("Could not find frontend setting with name: ", name);
       return;
     }
-    this.settings[index].value = String(value);
-    this.persist();
-    this.settingsSub$.next(this.settings);
   }
 
   getIntValue$(key: SettingKeys): Observable<number> {
@@ -49,37 +51,38 @@ export class FrontendSettingsService {
   }
 
   getIntValue(key: SettingKeys): number {
-    const elem = this.settings.find((s) => s.name === key);
+    const elem = this.settings[key];
     return Number(elem ? elem.value : "");
   }
 
   getStrValue(key: SettingKeys): string {
-    const elem = this.settings.find((s) => s.name === key);
+    const elem = this.settings[key];
     return String(elem ? elem.value : "");
   }
 
   getBoolValue(key: SettingKeys): boolean {
-    const elem = this.settings.find((s) => s.name === key);
+    const elem = this.settings[key];
     return elem ? elem.value === "true" : false;
   }
 
-  loadFrontendSettings$(): Observable<FrontendSetting[]> {
+  loadFrontendSettings$(): Observable<FrontendSettings> {
     return this.settings$;
   }
 
-  loadFrontendSettings(): FrontendSetting[] {
+  loadFrontendSettings(): FrontendSettings {
     const lsData = localStorage.getItem(LS_KEY) || "";
     try {
-      const savedSettings = <FrontendSetting[]>JSON.parse(lsData);
-      for (const setting of savedSettings) {
-        const elem = this.settings.find(
-          (s) => s.name === setting.name && s.value !== setting.value
+      const savedSettings = Object.entries(<FrontendSettings>JSON.parse(lsData));
+      const oldSettingsArray = Object.entries(this.settings);
+      for (const [name, setting] of savedSettings) {
+        const oldSetting = oldSettingsArray.find(
+          (s) => s[0] === name
         );
-        if (elem) {
+        if (oldSetting && oldSetting[1].value !== setting.value) {
           console.log(
-            `Changing ${elem.name} from "${elem.value}" (default value) to "${setting.value}" (user setting)`
+            `Changing ${name} from "${oldSetting[1].value}" (default value) to "${setting.value}" (user setting)`
           );
-          elem.value = setting.value;
+          this.settings[name as SettingKeys].value = setting.value;
         }
       }
     } catch (err) {}
@@ -92,14 +95,10 @@ export class FrontendSettingsService {
 
   private getValue$(key: SettingKeys): Observable<FrontendSetting> {
     return this.settings$.pipe(
-      map((s) => {
-        const elem = s.find((it) => it.name === key);
-        if (elem) {
-          return elem;
-        } else {
-          console.error("Could not find setting: ", key);
-          return <FrontendSetting>{};
-        }
+      map((s) => s[key]),
+      catchError((err) => {
+        console.error("Could not find setting: ", err);
+        return of({} as FrontendSetting);
       })
     );
   }

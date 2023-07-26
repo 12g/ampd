@@ -1,11 +1,11 @@
 import { Component } from "@angular/core";
 import { MatSlideToggleChange } from "@angular/material/slide-toggle";
 import { Title } from "@angular/platform-browser";
-import { Observable } from "rxjs";
+import { Observable, map } from "rxjs";
 import { FrontendSettingsService } from "src/app/service/frontend-settings.service";
 import { SettingsService } from "../service/settings.service";
 import { AmpdSetting } from "../shared/model/ampd-setting";
-import { FrontendSetting } from "../shared/model/internal/frontend-settings";
+import { FrontendSetting, FrontendSettings } from "../shared/model/internal/frontend-settings";
 import { MpdSettings } from "../shared/model/mpd-settings";
 
 @Component({
@@ -16,7 +16,7 @@ import { MpdSettings } from "../shared/model/mpd-settings";
 export class SettingsComponent {
   mpdSettings: Observable<MpdSettings>;
   ampdSettings: Observable<AmpdSetting[]>;
-  feSettings: FrontendSetting[];
+  feSettings$: Observable<[string, FrontendSetting][]>;
 
   constructor(
     private fsService: FrontendSettingsService,
@@ -26,7 +26,9 @@ export class SettingsComponent {
     this.titleService.setTitle("ampd — Settings");
     this.ampdSettings = this.settingsService.getAmpdSettings();
     this.mpdSettings = this.settingsService.getMpdSettings();
-    this.feSettings = this.fsService.loadFrontendSettings();
+    this.feSettings$ = this.fsService.loadFrontendSettings$().pipe(
+      map((settings) => Object.entries(settings))
+    );
   }
 
   toggleFrontendSetting(name: string, event: MatSlideToggleChange): void {
